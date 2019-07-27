@@ -61,4 +61,4 @@
     name: s3-volume
     version: "1.0.0"
     url: https://github.com/orange-cloudfoundry/s3-volume-release/releases/download/v1.0.0/s3-volume-1.0.0.tgz
-    sha1: 44f32853494248de9a3348db4ad4030b74f75ee3
+    sha1: 0521bf22086564b39f81621c65f675ad973a5691

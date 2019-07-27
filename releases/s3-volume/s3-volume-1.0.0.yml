@@ -1,0 +1,33 @@
+name: s3-volume
+version: 1.0.0
+commit_hash: a8181ed
+uncommitted_changes: false
+jobs:
+- name: s3driver
+  version: 5a20b2a0e0192cf5338ec01b3b5f64669b09f2d8655d3a794da0672581f7d5a7
+  fingerprint: 5a20b2a0e0192cf5338ec01b3b5f64669b09f2d8655d3a794da0672581f7d5a7
+  sha1: sha256:a556fc99faef00ce297762c930815066e0998467db79e2223f780f8e93a2a524
+  packages:
+  - s3driver
+  - mapfs-fuse
+packages:
+- name: golang-1.12-linux
+  version: 366fab6a3d5aabbaf5dd48b146f961310322fd86aed24bc3bc50fca22561390d
+  fingerprint: 366fab6a3d5aabbaf5dd48b146f961310322fd86aed24bc3bc50fca22561390d
+  sha1: sha256:12e13365acb8d011c367ceff3045c59418b354e6b57d664af59af2b007668fcb
+  dependencies: []
+- name: mapfs-fuse
+  version: 1690fc8e75ff6ab4473755aad44628ceb8a0f8552bd87d274023abd32931456e
+  fingerprint: 1690fc8e75ff6ab4473755aad44628ceb8a0f8552bd87d274023abd32931456e
+  sha1: sha256:8d040e45259f2b2abfce86a12cc6898d61bc2b081605f2a6cb4bfb9dd4df7ab8
+  dependencies: []
+- name: s3driver
+  version: 0568027f4810578fcf2045fccac0e9e219a342089de51eb4aa311c798d3a5081
+  fingerprint: 0568027f4810578fcf2045fccac0e9e219a342089de51eb4aa311c798d3a5081
+  sha1: sha256:ebacb28b357b7dea33a1d30dcf08f355c9560e02f8b12afede45850ad16377cf
+  dependencies:
+  - golang-1.12-linux
+license:
+  version: 483b12760736e6239e71b4f5d8409f05eb635659e20bba3fa4012ac27347c6c4
+  fingerprint: 483b12760736e6239e71b4f5d8409f05eb635659e20bba3fa4012ac27347c6c4
+  sha1: sha256:1b570c2b89685bd11de4ca81af509e706a3e469894892488f7f9de23c07a59af
