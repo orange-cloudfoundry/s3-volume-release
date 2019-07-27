@@ -1,0 +1,3 @@
+[submodule "src/s3driver"]
+	path = src/s3driver
+	url = https://github.com/orange-cloudfoundry/s3-volume-driver.git

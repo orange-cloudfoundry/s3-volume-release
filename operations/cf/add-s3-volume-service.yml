@@ -1,0 +1,64 @@
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/volume_services_enabled?
+  value: true
+- type: replace
+  path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/volume_services_enabled?
+  value: true
+- type: replace
+  path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/volume_services_enabled?
+  value: true
+
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/-
+  value:
+    name: s3driver
+    properties:
+      s3driver:
+        tls:
+          ca_cert: ((s3driver_cert.ca))
+          client_cert: ((s3driver_client_cert.certificate))
+          client_key: ((s3driver_client_cert.private_key))
+          server_cert: ((s3driver_cert.certificate))
+          server_key: ((s3driver_cert.private_key))
+    release: s3-volume
+
+- type: replace
+  path: /variables/-
+  value:
+    name: s3driver_ca
+    options:
+      common_name: s3driver-ca
+      is_ca: true
+    type: certificate
+
+- type: replace
+  path: /variables/-
+  value:
+    name: s3driver_cert
+    options:
+      alternative_names:
+        - 127.0.0.1
+      ca: s3driver_ca
+      common_name: 127.0.0.1
+      extended_key_usage:
+        - server_auth
+    type: certificate
+
+- type: replace
+  path: /variables/-
+  value:
+    name: s3driver_client_cert
+    options:
+      ca: s3driver_ca
+      common_name: s3-client
+      extended_key_usage:
+        - client_auth
+    type: certificate
+
+- type: replace
+  path: /releases/-
+  value:
+    name: s3-volume
+    version: "1.0.0"
+    url: https://github.com/orange-cloudfoundry/s3-volume-release/releases/download/v1.0.0/s3-volume-1.0.0.tgz
+    sha1: 44f32853494248de9a3348db4ad4030b74f75ee3

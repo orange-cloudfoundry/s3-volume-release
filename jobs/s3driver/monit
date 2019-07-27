@@ -1,0 +1,5 @@
+check process s3driver
+  with pidfile /var/vcap/sys/run/s3driver/s3driver.pid
+  start program "/var/vcap/jobs/s3driver/bin/s3driver_ctl start"
+  stop program "/var/vcap/jobs/s3driver/bin/s3driver_ctl stop"
+  group vcap

@@ -1,0 +1,8 @@
+---
+name: s3driver
+
+dependencies:
+  - golang-1.12-linux
+
+files:
+  - s3driver/**

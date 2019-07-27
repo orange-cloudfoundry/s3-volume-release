@@ -1,0 +1,16 @@
+set -e
+
+ostype=$(uname  | tr '[:upper:]' '[:lower:]')
+if [ -z "$BOSH_PACKAGES_DIR" ]; then
+    pkg_dir=$(readlink -nf /var/vcap/packages/golang-1.12-${ostype})
+else
+    pkg_dir=$BOSH_PACKAGES_DIR/golang-1.12-${ostype}
+fi
+
+source ${pkg_dir}/bosh/compile.env
+
+cd s3driver/cmd/s3driver
+go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/bin/s3driver
+
+cd ../../s3mounter
+go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/bin/s3mounter

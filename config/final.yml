@@ -1,0 +1,5 @@
+name: s3-volume
+blobstore:
+  provider: s3
+  options:
+    bucket_name: orange-dfy-s3-volume-release

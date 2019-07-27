@@ -1,0 +1,13 @@
+@startuml
+Diego -> s3driver: Call for mounting volume
+s3driver -> s3mounter: Create process and detach it from process group
+s3mounter -> s3server: Connect to bucket
+s3mounter -> s3mounter: create fuse server and mount through fuse
+s3mounter -> s3driver: Send signal to parent process
+alt SIGUSR1
+    s3driver -> Diego: Successful mount
+    Diego -> "app instance": Give access to mounted folder by s3mounter
+else SIGUSR2
+    s3driver ->x Diego: Failed mount
+end
+@enduml

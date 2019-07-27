@@ -1,0 +1,79 @@
+#!/bin/bash
+
+set -e
+
+function copy_client_certs_to_spec_dir() {
+  local cert_dir="<%= p('s3driver.driver_path') %>/certs/s3driver"
+
+  mkdir -p ${cert_dir}
+  cp -p /var/vcap/jobs/s3driver/config/certs/ca.crt ${cert_dir}
+  cp -p /var/vcap/jobs/s3driver/config/certs/client.crt ${cert_dir}
+  cp -p /var/vcap/jobs/s3driver/config/certs/client.key ${cert_dir}
+}
+
+install_if_missing ()
+{
+  echo "Installing $1"
+
+  set +e
+  dpkg -s $1
+  dpkg_installed=$(echo $?)
+  if [ "$dpkg_installed" != "0" ]; then
+    for x in `seq 1 100` :
+    do
+      dpkg  --force-confdef -i $2
+      if [ $? -ne 0 ] ; then
+        sleep 3
+      else
+        set -e
+        exit 0
+      fi
+    done
+    set -e
+    lsof -n
+    exit 1
+  else
+    echo "Skipping $1"
+  fi
+  set -e
+}
+
+codename=$(lsb_release -c | awk '{print $2}')
+if [ "$codename" == "trusty" ]; then
+  (
+  flock -x 200
+  install_if_missing fuse /var/vcap/packages/mapfs-fuse/fuse_2.9.2-4ubuntu4.14.04.1_amd64.deb
+  ) 200>/var/vcap/data/dpkg.lock
+elif [ "$codename" == "xenial" ]; then
+  (
+  flock -x 200
+  install_if_missing fuse /var/vcap/packages/mapfs-fuse/fuse_2.9.4-1ubuntu3.1_amd64.deb
+  ) 200>/var/vcap/data/dpkg.lock
+fi
+
+echo "Installing fuse"
+
+modprobe fuse || true
+groupadd fuse || true
+adduser vcap fuse
+chown root:fuse /dev/fuse
+cat << EOF > /etc/fuse.conf
+user_allow_other
+EOF
+chmod 644 /etc/fuse.conf
+
+DATA_DIR=<%= p("s3driver.driver_path") %>
+mkdir -p $DATA_DIR
+chown vcap:vcap $DATA_DIR
+
+umask 0
+
+mkdir -p "<%= p("s3driver.cell_mount_path") %>"
+chown vcap:vcap "<%= p("s3driver.cell_mount_path") %>"
+
+echo "Installed s3driver path"
+
+echo "Copying client certs to data directory..."
+copy_client_certs_to_spec_dir
+
+exit 0

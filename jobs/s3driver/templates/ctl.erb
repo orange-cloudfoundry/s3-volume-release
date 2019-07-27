@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -e
+
+CLIENT_CERTS_DIR=<%= p('s3driver.driver_path') %>/certs/s3driver
+SERVER_CERTS_DIR=/var/vcap/jobs/s3driver/config/certs
+RUN_DIR=/var/vcap/sys/run/s3driver
+LOG_DIR=/var/vcap/sys/log/s3driver
+PIDFILE=$RUN_DIR/s3driver.pid
+
+SCRIPT=$(basename $0)
+mkdir -p /var/vcap/sys/log/monit
+
+exec 1>> /var/vcap/sys/log/monit/${SCRIPT}.log
+exec 2>> /var/vcap/sys/log/monit/${SCRIPT}.err.log
+
+case $1 in
+start)
+  mkdir -p $RUN_DIR
+  chown -R vcap:vcap $RUN_DIR
+
+  mkdir -p $LOG_DIR
+  chown -R vcap:vcap $LOG_DIR
+
+  echo $$ > $PIDFILE
+
+  # Allowed number of open file descriptors
+  ulimit -n 100000
+
+  # volume drivers need to create directories with 777 so container users can see them
+  umask 0
+
+  ENABLE_INSECURE_SKIP_VERIFY=""
+  <% if p("s3driver.ssl.insecure_skip_verify") %>
+    ENABLE_INSECURE_SKIP_VERIFY="--insecureSkipVerify"
+  <% end %>
+
+  exec chpst /var/vcap/packages/s3driver/bin/s3driver \
+    --listenAddr="<%= p("s3driver.listen_addr") %>" \
+    --transport="tcp-json" \
+  <% if p("s3driver.tls.ca_cert") != '' %>\
+    --requireSSL \
+    --certFile="${SERVER_CERTS_DIR}/server.crt" \
+    --keyFile="${SERVER_CERTS_DIR}/server.key" \
+    --caFile="${CLIENT_CERTS_DIR}/ca.crt" \
+    --clientCertFile="${CLIENT_CERTS_DIR}/client.crt" \
+    --clientKeyFile="${CLIENT_CERTS_DIR}/client.key" \
+    ${ENABLE_INSECURE_SKIP_VERIFY} \
+  <% end %>\
+  <% if p("s3driver.enable_unique_volume_ids") %> \
+    --uniqueVolumeIds \
+  <% end %> \
+    --debugAddr="<%= p("s3driver.debug_addr") %>" \
+    --driversPath="<%= p("s3driver.driver_path") %>" \
+    --mountDir="<%= p("s3driver.cell_mount_path") %>" \
+    --logLevel="<%= p("s3driver.log_level") %>" \
+    --timeFormat="<%= p("s3driver.log_time_format") %>" \
+    --mounterPath="/var/vcap/packages/s3driver/bin/s3mounter" \
+    2> >(tee -a $LOG_DIR/s3driver.stderr.log | logger -p user.error -t vcap.s3driver) \
+    1> >(tee -a $LOG_DIR/s3driver.stdout.log | logger -p user.info -t vcap.s3driver)
+;;
+
+stop)
+  if [ -f $PIDFILE ]; then
+   kill -9 `cat $PIDFILE` || true
+  rm -f $PIDFILE
+fi
+;;
+
+*)
+echo "Usage: s3driver_ctl {start|stop}"
+;;
+esac

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+set -e
+
+RUN_DIR=/var/vcap/sys/run/s3driver
+PIDFILE=$RUN_DIR/s3driver.pid
+LOG_DIR=/var/vcap/sys/log/s3driver
+LOGFILE=$LOG_DIR/drain.log
+ADDRESS=<%=p("s3driver.admin_addr")%>
+
+mkdir -p $LOG_DIR
+
+exec 3>&1
+
+exec 1>> $LOGFILE
+exec 2>> $LOGFILE
+
+evacuate() {
+  curl --fail --max-time 600 --silent http://$ADDRESS/evacuate >/dev/null 2>&1
+}
+
+heartbeat() {
+  curl --fail --silent http://$ADDRESS/ping >/dev/null 2>&1
+}
+
+output_for_bosh() {
+  exit_code=$?
+
+  if [ $exit_code -eq 0 ]; then
+    echo "$(date): s3driver exited"
+  else
+    echo "$(date): evacuation failed"
+  fi
+
+  #See https://www.pivotaltracker.com/story/show/165747144/comments/202416034
+  echo $exit_code >&3
+}
+
+trap output_for_bosh EXIT
+
+if [ ! -f $PIDFILE ]; then
+  echo "$(date): PIDFILE does not exist"
+  exit 0
+fi
+
+pid=$(cat $PIDFILE)
+
+if [ ! -e /proc/$pid ]; then
+  echo "$(date): s3driver process not running"
+  exit 0
+fi
+
+# wait for rep
+while pgrep -x "rep" > /dev/null; do
+  echo "$(date): waiting for rep..."
+  sleep 3
+done
+
+echo "$(date): rep is done..evacuating s3driver"
+
+set +e
+evacuate
+evacuate_exit_code=$?
+set -e
+
+if [ $evacuate_exit_code -eq 0 ]; then
+  for i in {1..60}; do
+  if heartbeat; then
+    echo "$(date): waiting"
+    sleep 5
+  else
+    break
+  fi
+  done
+
+  kill -9 $pid || true
+  rm -rf $PIDFILE || true
+  elif [ $evacuate_exit_code -eq 28 ]; then
+  echo "$(date): Drain timed out"
+  kill -9 $pid || true
+  rm -rf $PIDFILE || true
+else
+  exit 1
+fi
