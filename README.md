@@ -51,7 +51,27 @@ You can pass more config in `mount_config`:
 - `use_kms` (*Optional*, boolean): Set to true to use kms (only works on aws s3)
 - `kms_key_id` (*Optional*, string): Kms key id (only works on aws s3)
 - `region_set` (*Optional*, boolean): set to true for using region set
- 
+
+## Limitation
+
+Under the hood [s3-volume-driver](https://github.com/orange-cloudfoundry/s3-volume-driver) use [goofys](https://github.com/kahing/goofys) 
+which as some limitation when using this filesystem:
+
+goofys has been tested under Linux and macOS.
+
+List of non-POSIX behaviors/limitations:
+  * only sequential writes supported
+  * does not store file mode/owner/group
+    * use `--(dir|file)-mode` or `--(uid|gid)` options
+  * does not support symlink or hardlink
+  * `ctime`, `atime` is always the same as `mtime`
+  * cannot `rename` directories with more than 1000 children
+  * `unlink` returns success even if file is not present
+  * `fsync` is ignored, files are only flushed on `close`
+
+In addition to the items above, the following are supportable but not yet implemented:
+  * creating files larger than 1TB
+
 ## How it works ?
 
 ### Components
